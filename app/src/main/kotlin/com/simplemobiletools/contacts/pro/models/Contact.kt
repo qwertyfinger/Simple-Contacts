@@ -1,10 +1,12 @@
 package com.simplemobiletools.contacts.pro.models
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.telephony.PhoneNumberUtils
 import com.simplemobiletools.commons.extensions.normalizePhoneNumber
 import com.simplemobiletools.commons.extensions.normalizeString
 import com.simplemobiletools.commons.helpers.*
+import com.simplemobiletools.contacts.pro.extensions.getAllContactSources
 import com.simplemobiletools.contacts.pro.helpers.SMT_PRIVATE
 
 data class Contact(var id: Int, var prefix: String, var firstName: String, var middleName: String, var surname: String, var suffix: String, var nickname: String,
@@ -17,6 +19,9 @@ data class Contact(var id: Int, var prefix: String, var firstName: String, var m
         var sorting = 0
         var startWithSurname = false
     }
+
+    val firstPhoneNumber: String?
+        get() = phoneNumbers.firstOrNull()?.value
 
     override fun compareTo(other: Contact): Int {
         var result = when {
@@ -154,4 +159,8 @@ data class Contact(var id: Int, var prefix: String, var firstName: String, var m
     fun isPrivate() = source == SMT_PRIVATE
 
     fun getSignatureKey() = if (photoUri.isNotEmpty()) photoUri else hashCode()
+
+    fun getContactSourceType(context: Context) = context.getAllContactSources().firstOrNull { it.name == source }?.type ?: ""
+
+    fun isSimCardContact(context: Context) = getContactSourceType(context).contains("sim")
 }

@@ -26,7 +26,7 @@ import kotlin.collections.ArrayList
 
 class ContactsHelper(val context: Context) {
     private val BATCH_SIZE = 50
-    private var displayContactSources = ArrayList<String>()
+    private var displayContactSources = mutableListOf<String>()
 
     fun getContacts(getAll: Boolean = false, gettingDuplicates: Boolean = false, ignoredContactSources: HashSet<String> = HashSet(), callback: (ArrayList<Contact>) -> Unit) {
         ensureBackgroundThread {
@@ -35,11 +35,15 @@ class ContactsHelper(val context: Context) {
 
             if (getAll) {
                 displayContactSources = if (ignoredContactSources.isEmpty()) {
-                    context.getAllContactSources().map { it.name }.toMutableList() as ArrayList
+                    context.getAllContactSources().map { it.name }.toMutableList()
                 } else {
-                    context.getAllContactSources().filter {
-                        it.getFullIdentifier().isNotEmpty() && !ignoredContactSources.contains(it.getFullIdentifier())
-                    }.map { it.name }.toMutableList() as ArrayList
+                    context.getAllContactSources().filter { source ->
+                        val sourceName = source.getFullIdentifier()
+                        val isCustomSimSource = sourceName != SIM_1_CUSTOM || sourceName != SIM_2_CUSTOM
+                        val isNonCustomSimSource = sourceName.contains("sim", ignoreCase = true) && !isCustomSimSource
+
+                        sourceName.isNotEmpty() && !isNonCustomSimSource && !ignoredContactSources.contains(sourceName)
+                    }.map { it.name }.toMutableList()
                 }
             }
 
@@ -49,6 +53,12 @@ class ContactsHelper(val context: Context) {
                 LocalContactsHelper(context).getAllContacts().forEach {
                     contacts.put(it.id, it)
                 }
+            }
+
+            // TODO: how to separate contacts from SIM1 and SIM2?
+            val simContactsHelper = SimContactsHelper(context)
+            if (displayContactSources.contains(SIM_1_CUSTOM)) {
+                simContactsHelper.getAllContacts().forEach { contacts.put(it.id, it) }
             }
 
             val contactsSize = contacts.size()
@@ -819,8 +829,6 @@ class ContactsHelper(val context: Context) {
         }
     }
 
-    private fun getContactSourceType(accountName: String) = getDeviceContactSources().firstOrNull { it.name == accountName }?.type ?: ""
-
     private fun getContactProjection() = arrayOf(
         Data.MIMETYPE,
         Data.CONTACT_ID,
@@ -1194,7 +1202,7 @@ class ContactsHelper(val context: Context) {
             val operations = ArrayList<ContentProviderOperation>()
             ContentProviderOperation.newInsert(RawContacts.CONTENT_URI).apply {
                 withValue(RawContacts.ACCOUNT_NAME, contact.source)
-                withValue(RawContacts.ACCOUNT_TYPE, getContactSourceType(contact.source))
+                withValue(RawContacts.ACCOUNT_TYPE, contact.getContactSourceType(context))
                 operations.add(build())
             }
 
@@ -1331,7 +1339,7 @@ class ContactsHelper(val context: Context) {
 
             // storing contacts on some devices seems to be messed up and they move on Phone instead, or disappear completely
             // try storing a lighter contact version with this oldschool version too just so it wont disappear, future edits work well
-            if (getContactSourceType(contact.source).contains(".sim")) {
+            if (contact.getContactSourceType(context).contains(".sim")) {
                 val simUri = Uri.parse("content://icc/adn")
                 ContentValues().apply {
                     put("number", contact.phoneNumbers.firstOrNull()?.value ?: "")

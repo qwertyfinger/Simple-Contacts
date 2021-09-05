@@ -23,6 +23,8 @@ const val WAS_LOCAL_ACCOUNT_INITIALIZED = "was_local_account_initialized"
 const val SHOW_PRIVATE_CONTACTS = "show_private_contacts"
 
 const val SMT_PRIVATE = "smt_private"   // used at the contact source of local contacts hidden from other apps
+const val SIM_1_CUSTOM = "sim_1_custom" // used as a custom source tag for SIM1 contacts
+const val SIM_2_CUSTOM = "sim_2_custom" // used as a custom source tag for SIM2 contacts
 const val GROUP = "group"
 const val IS_FROM_SIMPLE_CONTACTS = "is_from_simple_contacts"
 const val ADD_NEW_CONTACT_NUMBER = "add_new_contact_number"

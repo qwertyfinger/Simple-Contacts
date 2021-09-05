@@ -299,10 +299,17 @@ fun Context.getVisibleContactSources(): ArrayList<String> {
 fun Context.getAllContactSources(): ArrayList<ContactSource> {
     val sources = ContactsHelper(this).getDeviceContactSources()
     sources.add(getPrivateContactSource())
+    sources.add(getCustomSim1ContactSource())
+    // TODO: deal with devices with 2 SIM cards
+//    if (has2SimCards) sources.add(getCustomSim2ContactSource())
     return sources.toMutableList() as ArrayList<ContactSource>
 }
 
 fun Context.getPrivateContactSource() = ContactSource(SMT_PRIVATE, SMT_PRIVATE, getString(R.string.phone_storage_hidden))
+
+fun Context.getCustomSim1ContactSource() = ContactSource(SIM_1_CUSTOM, SIM_1_CUSTOM, getString(R.string.sim_1_storage))
+
+fun Context.getCustomSim2ContactSource() = ContactSource(SIM_2_CUSTOM, SIM_2_CUSTOM, getString(R.string.sim_2_storage))
 
 fun Context.getSocialActions(id: Int): ArrayList<SocialAction> {
     val uri = ContactsContract.Data.CONTENT_URI
